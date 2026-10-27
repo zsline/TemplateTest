@@ -1,0 +1,52 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: templatetest_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - templatetest_network
+    depends_on:
+      - db
+
+  web:
+    image: nginx:alpine
+    container_name: templatetest_web
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - templatetest_network
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: templatetest_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: templatetest
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root_secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - templatetest_network
+
+networks:
+  templatetest_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
